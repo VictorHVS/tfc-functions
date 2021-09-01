@@ -1,4 +1,44 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import yfinance as yf
+from twelvedata import TDClient
+from twelvedata.http_client import DefaultHttpClient
+
+import requests # to get image from the web
+import shutil
+
+
+API_URL = 'https://api.twelvedata.com'
+td = TDClient(apikey="1777123baf4e4cd2af3dbe16460361d6")
+
+
+def list_all():
+    """[summary]
+    [
+        {
+            "symbol":"TRAD3",
+            "name":"TC Traders Club S.A.",
+            "currency":"BRL",
+            "exchange":"Bovespa",
+            "country":"Brazil",
+            "type":"EQUITY"
+        },
+
+        {
+            "symbol":"TORD11",
+            "name":"Tordesilhas Ei Fundo De Investimento Imobiliario",
+            "currency":"BRL",
+            "exchange":"Bovespa",
+            "country":"Brazil",
+            "type":"Common"
+        }
+    ]
+
+    Returns:
+        [type]: [description]
+    """
+    return td.get_stocks_list(exchange='Bovespa').as_json()
 
 
 def get_ticker_info(symbol):
@@ -175,14 +215,33 @@ def get_ticker_info(symbol):
 
 def download_icon(symbol):
     """  
-    [ ] Verificar disponibilidade da imagem
-    [ ] Baixar
-
-    1. https://pro.clear.com.br/src/assets/symbols_icons/FLRY.png
+    A crawler from: https://pro.clear.com.br/src/assets/symbols_icons/FLRY.png
     """
-    pass
+
+    name = symbol[:4]
+    r = requests.get(f"https://pro.clear.com.br/src/assets/symbols_icons/{name}.png", stream = True)
+
+    # Check if the image was retrieved successfully
+    if r.status_code == 200:
+        # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
+        r.raw.decode_content = True
+        
+        # Open a local file with wb ( write binary ) permission.
+        with open(f"icons/{name}.png",'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+            
+        print('Sucess: ', symbol)
+    else:
+        print('Failed', symbol)
 
 
-def upload_icon(file):
-    # TODO Transferir para storage remoto
-    pass
+def mass_icon_download():
+    tickers = set()
+
+    for ticker in list_all():
+        tickers.add(ticker['symbol'][:4])
+    
+    for ticker in tickers:
+        download_icon(ticker)
+
+    return tickers
