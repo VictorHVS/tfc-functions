@@ -24,7 +24,10 @@ def return_exchanges():
                 "code": "BRL",
                 "symbol": "R$",
                 "name": "Brazilian Real"
-            }
+            },
+            # TODO
+            "open_at": DATETIME,
+            "close_at": DATETIME
         }
     ]
 
