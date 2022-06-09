@@ -13,9 +13,10 @@ https://www.figma.com/file/SnTLRGwxp7TDCpRX8hPHos/MVP-Feats?node-id=111%3A576
 - [ ] Buy Order
 - [ ] Sell Order
 - [ ] Users portfolio consolidation
+
 ---
 ## Companies Info
-![img.png](imgs/stock_list.png)
+![img.png](doc/images/stock_list.png)
 
 ```JSON
 {
@@ -46,12 +47,12 @@ https://www.figma.com/file/SnTLRGwxp7TDCpRX8hPHos/MVP-Feats?node-id=111%3A576
 ```
 - **cloud function:** stock-eod
 - **description:** Get updated info about companies; Add new stocks; Compile EOD infos; get historical data for new ticker; 
-- **trigger:** Cronjob Scheduler. 0 19 * * *
+- **trigger:** Cronjob Scheduler. 0 9 * * *
 - **database:** Firestore
 - **path:** companies/_exchange_ticker_ | exp: companies/nasdaq_aapl
 
 ## Intraday values
-![img.png](imgs/stock_detail.png)
+![img.png](doc/images/stock_detail.png)
 
 ```JSON
 {
@@ -85,7 +86,7 @@ https://www.figma.com/file/SnTLRGwxp7TDCpRX8hPHos/MVP-Feats?node-id=111%3A576
 - **path:** _exchange_ticker_ | exp: nasdaq_aapl
 
 ## New Account
-![img.png](imgs/auth.png)
+![img.png](doc/images/auth.png)
 
 ```JSON
 {
