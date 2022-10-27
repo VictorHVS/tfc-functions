@@ -1,54 +1,34 @@
+// User table is public to everyone
 Table users {
-  id varchar unique
+  id varchar [pk]
   created_at timestamp
   updated_at timestamp
   net_value int
-  portfolio_sum int
+  portfolio_value int
   consolidated_at timestamp
 }
 
 Table exchanges {
-  id varchar unique
   created_at timestamp
   updated_at timestamp
   name varchar
-  code varchar
+  mic_code varchar [pk]
   country varchar
+  suffix varchar
+  delay varchar
   timezone varchar
 }
 
 Table stocks {
-  id varchar unique
+  symbol varchar [pk]
   created_at timestamp
   updated_at timestamp
-  symbol varchar
   name varchar
   currency varchar
-  mic_code varchar
+  exchange varchar 
+  mic_code varchar [ref: > exchanges.mic_code]
   country varchar
   type varchar
-}
-
-Table etfs {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  symbol varchar
-  currency varchar
-  exchange varchar
-  mic_code varchar
-  country varchar
-}
-
-Table index_es { // TODO: rename the table
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  symbol varchar
-  name varchar
-  country varchar
-  currency varchar
-
 }
 
 Table companies {
@@ -76,14 +56,6 @@ Table companies {
   price_flutuation float
   price_absolute_flutuation float
   // eod_past_week []
-}
-
-Table asset_types {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  code varchar
-  name varchar
 }
 
 Table time_series {
@@ -121,7 +93,7 @@ Table end_of_day {
   id varchar unique
   created_at timestamp
   updated_at timestamp
-
+  
 }
 
 Table user_assets {
@@ -141,12 +113,14 @@ Table user_queue_orders {
   created_at timestamp
   updated_at timestamp
   amount int
-  price int
-  exchange varchar
-  symbol varchar
+  price int // atualizado no servidor
+  mic_code varchar [ref: > exchanges.mic_code]  // info duplicada a fins de NOSQL
+  user_id varchar [ref: > users.id]
+  symbol varchar [ref: > stocks.symbol]
+  exchange varchar // info duplicada a fins de NOSQL
+  done boolean [default: false]
 }
 
 // Table sector
 // Table industry
-
-// enums: intervals, stock_type, sectors, industry
+// enums: intervals, stock_type, sectors, industry, mic_code, currency, country

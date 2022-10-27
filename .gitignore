@@ -3,4 +3,4 @@ __pycache__/
 .env
 
 google-service.json
-credentials.json
+cloud-functions/credentials.json

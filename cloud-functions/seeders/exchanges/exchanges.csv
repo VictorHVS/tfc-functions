@@ -1,0 +1,80 @@
+country;exchange;suffix;delay;provider;mic_code;timezone
+United States of America;Chicago Board of Trade (CBOT);.CBT;10 min;ICE Data Services
+United States of America;Chicago Mercantile Exchange (CME);.CME;10 min;ICE Data Services
+United States of America;Dow Jones Indexes;N/A;Real-time;ICE Data Services
+United States of America;Nasdaq Stock Exchange;N/A;Real-time;ICE Data Services;null;null
+United States of America;ICE Futures US;.NYB;30 min;ICE Data Services;null;null
+United States of America;New York Commodities Exchange (COMEX);.CMX;30 min;ICE Data Services;null;null
+United States of America;New York Mercantile Exchange (NYMEX);.NYM;30 min;ICE Data Services;null;null
+United States of America;Options Price Reporting Authority (OPRA);N/A;15 min;ICE Data Services;null;null
+United States of America;OTC Bulletin Board Market;N/A;Real-time;ICE Data Services;null;null
+United States of America;OTC Markets Group;N/A;15 min;ICE Data Services;null;null
+United States of America;S & P Indices;N/A;Real-time;ICE Data Services;null;null
+Argentina;Buenos Aires Stock Exchange (BYMA);.BA;30 min;ICE Data Services;null;null
+Austria;Vienna Stock Exchange;.VI;15 min;ICE Data Services;null;null
+Australia;Australian Stock Exchange (ASX);.AX;20 min;ICE Data Services;null;null
+Belgium;Euronext Brussels;.BR;15 min;ICE Data Services;null;null
+Brazil;Sao Paolo Stock Exchange (BOVESPA);.SA;15 min;ICE Data Services;BVMF;"America/Paramaribo"
+Canada;Canadian Securities Exchange;.CN;Real-time;ICE Data Services;null;null
+Canada;NEO Exchange;.NE;Real-time;ICE Data Services;null;null
+Canada;Toronto Stock Exchange (TSX);.TO;Real-time;ICE Data Services;null;null
+Canada;TSX Venture Exchange (TSXV);.V;Real-time;ICE Data Services;null;null
+Chile;Santiago Stock Exchange;.SN;15 min;ICE Data Services;null;null
+China;Shanghai Stock Exchange;.SS;30 min;ICE Data Services;null;null
+China;Shenzhen Stock Exchange;.SZ;30 min;ICE Data Services;null;null
+Czech Republic;Prague Stock Exchange Index;.PR;20 min;ICE Data Services;null;null
+Denmark;Nasdaq OMX Copenhagen;.CO;Real-time;ICE Data Services;null;null
+Egypt;Egyptian Exchange Index (EGID);.CA;20 min;ICE Data Services;null;null
+Estonia;Nasdaq OMX Tallinn;.TL;Real-time;ICE Data Services;null;null
+Europe;Euronext;.NX;15 min;ICE Data Services;null;null
+Finland;Nasdaq OMX Helsinki;.HE;Real-time;ICE Data Services;null;null
+France;Euronext Paris;.PA;15 min;ICE Data Services;null;null
+Germany;Berlin Stock Exchange;.BE;15 min;ICE Data Services;null;null
+Germany;Bremen Stock Exchange;.BM;15 min;ICE Data Services;null;null
+Germany;Dusseldorf Stock Exchange;.DU;15 min;ICE Data Services;null;null
+Germany;Frankfurt Stock Exchange;.F;15 min;ICE Data Services;null;null
+Germany;Hamburg Stock Exchange;.HM;15 min;ICE Data Services;null;null
+Germany;Hanover Stock Exchange;.HA;15 min;ICE Data Services;null;null
+Germany;Munich Stock Exchange;.MU;15 min;ICE Data Services;null;null
+Germany;Stuttgart Stock Exchange;.SG;15 min;ICE Data Services;null;null
+Germany;Deutsche Boerse XETRA;.DE;15 min;ICE Data Services;null;null
+Global;Currency Rates;#NAME?;Real-time;ICE Data Services;null;null
+Greece;Athens Stock Exchange (ATHEX);.AT;15 min;ICE Data Services;null;null
+Hong Kong;Hong Kong Stock Exchange (HKEX)***;.HK;15 min;ICE Data Services;null;null
+Hungary;Budapest Stock Exchange;.BD;15 min;ICE Data Services;null;null
+Iceland;Nasdaq OMX Iceland;.IC;Real-time;ICE Data Services;null;null
+India;Bombay Stock Exchange;.BO;Real-time;ICE Data Services;null;null
+India;National Stock Exchange of India;.NS;Real-time**;ICE Data Services;null;null
+Indonesia;Indonesia Stock Exchange (IDX);.JK;10 min;ICE Data Services;null;null
+Ireland;Euronext Dublin;.IR;15 min;ICE Data Services;null;null
+Israel;Tel Aviv Stock Exchange;.TA;20 min;ICE Data Services;null;null
+Italy;EuroTLX;.TI;20 min;ICE Data Services;null;null
+Italy;Italian Stock Exchange;.MI;20 min;ICE Data Services;null;null
+Japan;Nikkei Indices;N/A;30 min;ICE Data Services;null;null
+Japan;Tokyo Stock Exchange;.T;20 min;ICE Data Services;null;null
+Latvia;Nasdaq OMX Riga;.RG;Real-time;ICE Data Services;null;null
+Lithuania;Nasdaq OMX Vilnius;.VS;Real-time;ICE Data Services;null;null
+Malaysia;Malaysian Stock Exchange;.KL;15 min;ICE Data Services;null;null
+Mexico;Mexico Stock Exchange (BMV);.MX;20 min;ICE Data Servicess;null;null
+Netherlands;Euronext Amsterdam;.AS;15 min;ICE Data Services;null;null
+New Zealand;New Zealand Stock Exchange (NZX);.NZ;20 min;ICE Data Services;null;null
+Norway;Oslo Stock Exchange;.OL;15 min;ICE Data Services;null;null
+Portugal;Euronext Lisbon;.LS;15 min;ICE Data Services;null;null
+Qatar;Qatar Stock Exchange;.QA;15 min;ICE Data Services;null;null
+Russia;Moscow Exchange (MOEX);.ME;15 min;ICE Data Services;null;null
+Singapore;Singapore Stock Exchange (SGX);.SI;20 min;ICE Data Services;null;null
+South Africa;Johannesburg Stock Exchange;.JO;15 min;ICE Data Services;null;null
+South Korea;Korea Stock Exchange;.KS;20 min;ICE Data Services;null;null
+South Korea;KOSDAQ;.KQ;20 min;ICE Data Services;null;null
+Spain;Madrid SE C.A.T.S.;.MC;15 min;ICE Data Services;null;null
+Saudi Arabia;Saudi Stock Exchange (Tadawul);.SAU;15 min;ICE Data Services;null;null
+Sweden;Nasdaq OMX Stockholm;.ST;Real-time;ICE Data Services;null;null
+Switzerland;Swiss Exchange (SIX);.SW;30 min;ICE Data Services;null;null
+Taiwan;Taiwan OTC Exchange;.TWO;20 min;ICE Data Services;null;null
+Taiwan;Taiwan Stock Exchange (TWSE);.TW;20 min;ICE Data Services;null;null
+Thailand;Stock Exchange of Thailand (SET);.BK;15 min;ICE Data Services;null;null
+Turkey;Borsa İstanbul;.IS;15 min;ICE Data Services;null;null
+United Kingdom;FTSE Indices;N/A;15 min;ICE Data Services;null;null
+United Kingdom;London Stock Exchange;.L;20 min;ICE Data Services;null;null
+United Kingdom;London Stock Exchange;.IL;20 min;ICE Data Services;null;null
+Venezuela;Caracas Stock Exchange;.CR;15 min;ICE Data Services;null;null
