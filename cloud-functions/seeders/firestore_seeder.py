@@ -5,7 +5,8 @@ from firebase_admin import firestore
 from firebase_admin.credentials import Certificate
 
 from seeders.exchanges.exchanges import exchanges_to_json
-from seeders.model import Exchange
+from seeders.model import Exchange, Stock
+from seeders.stocks.stocks import stocks_to_json
 
 
 def instantiate():
@@ -58,11 +59,42 @@ def seed_exchanges(db, transaction):
             )
 
 
+def seed_stocks(db, transaction):
+    stocks_dict = stocks_to_json()
+    for item in stocks_dict:
+        stock = Stock(
+            symbol=item['symbol'],
+            created_at=firestore.firestore.SERVER_TIMESTAMP,
+            updated_at=firestore.firestore.SERVER_TIMESTAMP,
+            exchange_id=item['exchange'],
+            country=item['country'],
+            name=item['shortName'],
+            currency=item['currency'],
+            exchange_name="BOVESPA",
+            sector=item['sector'],
+            industry=item['industry'],
+            website=item['website'],
+            description=item['longBusinessSummary'],
+            city=item['city'],
+            state=item['state'],
+            logo_url=item['logo_url'],
+        )
+
+        save(
+            db=db,
+            transaction=transaction,
+            collection=Stock.COLLECTION,
+            uuid=stock.uuid,
+            document=stock.to_dict()
+        )
+
+
 def seed():
     app, db = instantiate()
     transaction = db.transaction()
 
     seed_exchanges(db, None)
+    seed_stocks(db, None)
 
     transaction.commit()
 

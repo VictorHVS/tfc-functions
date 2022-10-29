@@ -14,7 +14,7 @@ Argentina;Buenos Aires Stock Exchange (BYMA);.BA;30 min;ICE Data Services;null;n
 Austria;Vienna Stock Exchange;.VI;15 min;ICE Data Services;null;null
 Australia;Australian Stock Exchange (ASX);.AX;20 min;ICE Data Services;null;null
 Belgium;Euronext Brussels;.BR;15 min;ICE Data Services;null;null
-Brazil;Sao Paolo Stock Exchange (BOVESPA);.SA;15 min;ICE Data Services;BVMF;"America/Paramaribo"
+Brazil;BOVESPA;.SA;15 min;ICE Data Services;BVMF;"America/Paramaribo"
 Canada;Canadian Securities Exchange;.CN;Real-time;ICE Data Services;null;null
 Canada;NEO Exchange;.NE;Real-time;ICE Data Services;null;null
 Canada;Toronto Stock Exchange (TSX);.TO;Real-time;ICE Data Services;null;null

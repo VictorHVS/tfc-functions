@@ -26,25 +26,17 @@ Table stocks {
   name varchar
   currency varchar
   exchange varchar 
-  mic_code varchar [ref: > exchanges.mic_code]
-  country varchar
+  mic_code varchar [ref: - exchanges.mic_code]
   type varchar
-}
-
-Table companies {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  symbol varchar
-  mic_code varchar
-  name varchar
-  exchange varchar
+  price int
+  price_flutuation float
+  price_absolute_flutuation float
+  // eod_past_week []
   sector varchar
   industry varchar
   employees int
   website varchar
   description varchar
-  type varchar
   ceo varchar
   address varchar
   city varchar
@@ -52,10 +44,6 @@ Table companies {
   state varchar
   country varchar
   phone varchar
-  price int
-  price_flutuation float
-  price_absolute_flutuation float
-  // eod_past_week []
 }
 
 Table time_series {
@@ -86,9 +74,10 @@ Table intervals {
   id varchar unique
   created_at timestamp
   updated_at timestamp
+
 }
 
-// asset lets price
+// asset last price
 Table end_of_day {
   id varchar unique
   created_at timestamp
