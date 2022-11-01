@@ -85,3 +85,50 @@ class Stock:
             u'logo_url': self.logo_url,
         }
         return dest
+
+
+class TimeSeries:
+    def __init__(self,
+                 uuid,
+                 datetime,
+                 stock_uuid,
+                 interval,
+                 currency,
+                 exchange_uuid,
+                 timezone,
+                 open,
+                 high,
+                 low,
+                 close,
+                 volume,
+                 ):
+
+        self.uuid = str(uuid)
+        self.datetime = datetime
+        self.timezone = str(timezone)
+        self.stock_uuid = str(stock_uuid)
+        self.exchange_uuid = str(exchange_uuid)
+        self.interval = str(interval)
+        self.currency = str(currency)
+        self.open = float(open)
+        self.high = float(high)
+        self.low = float(low)
+        self.close = float(close)
+        self.volume = float(volume)
+
+    def to_dict(self):
+        dest = {
+            u'uuid': self.uuid,
+            u'datetime': self.datetime,
+            u'timezone': self.timezone,
+            u'stock_uuid': self.stock_uuid,
+            u'exchange_uuid': self.exchange_uuid,
+            u'interval': self.interval,
+            u'currency': self.currency,
+            u'open': self.open,
+            u'high': self.high,
+            u'low': self.low,
+            u'close': self.close,
+            u'volume': self.volume,
+        }
+        return dest

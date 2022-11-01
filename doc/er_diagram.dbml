@@ -54,35 +54,11 @@ Table time_series {
   exchange_timezone varchar
   exchange varchar
   mic_code varchar
-  type varchar
   open numeric
   high numeric
   low numeric
   close numeric
   volume numeric
-}
-
-Table historical_data {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  interval varchar
-  // list of time_series
-}
-
-Table intervals {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-
-}
-
-// asset last price
-Table end_of_day {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  
 }
 
 Table user_assets {

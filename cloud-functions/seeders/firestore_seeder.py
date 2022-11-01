@@ -5,7 +5,8 @@ from firebase_admin import firestore
 from firebase_admin.credentials import Certificate
 
 from seeders.exchanges.exchanges import exchanges_to_json
-from seeders.model import Exchange, Stock
+from seeders.historical_data.historical_data import time_series_to_dict, periods_intervals
+from seeders.model import Exchange, Stock, TimeSeries
 from seeders.stocks.stocks import stocks_to_json
 
 
@@ -26,7 +27,7 @@ def instantiate():
 
 
 def save(db, transaction, collection, uuid, document):
-    result_ref = db.collection(collection).document(uuid)
+    result_ref = db.document(f"{collection}/{uuid}")
     if transaction:
         transaction.set(result_ref, document)
     else:
@@ -89,12 +90,48 @@ def seed_stocks(db, transaction):
         )
 
 
+def seed_historical_data(db, transaction):
+    stocks_dict = stocks_to_json()
+    for item in stocks_dict:
+        symbol = item['symbol']
+        for period in periods_intervals:
+            interval_str = period["interval"]
+            time_series_list = time_series_to_dict(symbol=symbol, period=interval_str)
+            for time_series in time_series_list:
+                doc = TimeSeries(
+                    uuid=time_series["uuid"],
+                    datetime=time_series["datetime"],
+                    stock_uuid=time_series["stock_uuid"],
+                    interval=time_series["interval"],
+                    currency=time_series["currency"],
+                    exchange_uuid=time_series["exchange_uuid"],
+                    timezone=time_series["timezone"],
+                    open=time_series["open"],
+                    high=time_series["high"],
+                    low=time_series["low"],
+                    close=time_series["close"],
+                    volume=time_series["volume"]
+                )
+
+                path = f"{Stock.COLLECTION}/{symbol}/{interval_str}"
+
+                save(
+                    db=db,
+                    transaction=transaction,
+                    collection=path,
+                    uuid=doc.uuid,
+                    document=doc.to_dict()
+                )
+            return
+
+
 def seed():
     app, db = instantiate()
     transaction = db.transaction()
 
-    seed_exchanges(db, None)
-    seed_stocks(db, None)
+    # seed_exchanges(db, None)
+    # seed_stocks(db, None)
+    seed_historical_data(db, None)
 
     transaction.commit()
 
