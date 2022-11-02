@@ -81,6 +81,11 @@ def save(db, transaction, collection, uuid, document):
 
 
 def entry_point(event, context):
+    # CRIAR UM INTERMEDIARIO QUE IRÁ:
+    # 1. Criar um cron que roda every minuto e executa esta funcao
+    # 2. Esta funcao pega os ultimos 69 stocks atualizados
+    # 3. Executa o mesmo que o seeder de historical data
+    # 4. Atualiza price int, price_flutuation float, price_absolute_flutuation float,1d_price_past_week [] on stock
     app, db = instantiate()
     tickers = ["RRRP3.SA", "ALPA4.SA", "ABEV3.SA", "AMER3.SA", "ASAI3.SA", "AZUL4.SA", "B3SA3.SA", "BPAN4.SA",
                "BBSE3.SA", "BRML3.SA", "BBDC3.SA", "BBDC4.SA", "BRAP4.SA", "BBAS3.SA", "BRKM5.SA", "BRFS3.SA",

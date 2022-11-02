@@ -2,5 +2,6 @@
 __pycache__/
 .env
 
+time_series/
 google-service.json
 cloud-functions/credentials.json

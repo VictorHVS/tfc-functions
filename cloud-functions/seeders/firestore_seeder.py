@@ -90,13 +90,18 @@ def seed_stocks(db, transaction):
         )
 
 
-def seed_historical_data(db, transaction):
+def seed_historical_data(db):
     stocks_dict = stocks_to_json()
     for item in stocks_dict:
         symbol = item['symbol']
+        exchange = item['exchange']
         for period in periods_intervals:
             interval_str = period["interval"]
+            path = f"{Stock.COLLECTION}/{symbol}{exchange}/{interval_str}"
+            print(path)
+
             time_series_list = time_series_to_dict(symbol=symbol, period=interval_str)
+
             for time_series in time_series_list:
                 doc = TimeSeries(
                     uuid=time_series["uuid"],
@@ -113,27 +118,21 @@ def seed_historical_data(db, transaction):
                     volume=time_series["volume"]
                 )
 
-                path = f"{Stock.COLLECTION}/{symbol}/{interval_str}"
-
                 save(
                     db=db,
-                    transaction=transaction,
+                    transaction=None,
                     collection=path,
                     uuid=doc.uuid,
                     document=doc.to_dict()
                 )
-            return
 
 
 def seed():
     app, db = instantiate()
-    transaction = db.transaction()
 
-    # seed_exchanges(db, None)
-    # seed_stocks(db, None)
-    seed_historical_data(db, None)
-
-    transaction.commit()
+    seed_exchanges(db, None)
+    seed_stocks(db, None)
+    seed_historical_data(db)
 
 
 if __name__ == '__main__':
