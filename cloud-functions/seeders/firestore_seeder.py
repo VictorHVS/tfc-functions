@@ -129,10 +129,13 @@ def seed_historical_data(db):
 
 def seed():
     app, db = instantiate()
+    transaction = db.transaction()
 
     seed_exchanges(db, None)
     seed_stocks(db, None)
     seed_historical_data(db)
+
+    transaction.commit()
 
 
 if __name__ == '__main__':
