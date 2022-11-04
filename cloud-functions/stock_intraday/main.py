@@ -1,12 +1,13 @@
 import asyncio
 import logging
 import os
+from functools import reduce
 
 import firebase_admin
 import sentry_sdk
 import yfinance as yf
-from firebase_admin import firestore
 from firebase_admin.credentials import Certificate
+from google.cloud import firestore
 from sentry_sdk.integrations.gcp import GcpIntegration
 
 sentry_sdk.init(
@@ -24,35 +25,32 @@ sentry_sdk.init(
 
 def instantiate():
     if firebase_admin._apps:
-        return firebase_admin.get_app(), firestore.client()
+        return firestore.AsyncClient()
 
     try:
         key_path = f'{os.path.pardir}/credentials.json'
-
         cred = Certificate(key_path)
-        app = firebase_admin.initialize_app(cred)
-        db = firestore.client()
+        db = firestore.AsyncClient()
     except:
-        app = firebase_admin.initialize_app()
-        db = firestore.client()
+        db = firestore.AsyncClient()
 
-    return app, db
+    return db
 
 
 async def save(db, transaction, collection, uuid, document):
     result_ref = db.document(f"{collection}/{uuid}")
     if transaction:
-        return transaction.set(result_ref, document)
+        await transaction.set(result_ref, document)
     else:
-        return result_ref.set(document)
+        await result_ref.set(document)
 
-    # logging.info('%s saved in %s collection', uuid, collection)
+    logging.info('%s saved in %s collection', uuid, collection)
 
 
-def fetch_data_frame(symbol, period="1d", interval="30min"):
+def fetch_data_frame(symbols, period="1d", interval="30min"):
     return yf.download(  # or pdr.get_data_yahoo(...
         # tickers list or string as well
-        tickers=symbol,
+        tickers=symbols,
 
         # use "period" instead of start/end
         # valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
@@ -86,20 +84,20 @@ def fetch_data_frame(symbol, period="1d", interval="30min"):
     )
 
 
-def fetch_stocks(db, stock_len):
+def fetch_stocks(stock_len):
+    db = firestore.Client()
     return db.collection("stocks") \
         .where("enabled", "==", True) \
-        .order_by("updated_at", direction=firestore.firestore.Query.ASCENDING) \
+        .order_by("updated_at", direction=firestore.Query.ASCENDING) \
         .limit(stock_len) \
-        .stream()
+        .get()
 
 
-async def save_time_series(stock, period, interval, db):
-    path = f"stocks/{stock}/{interval}"
+async def save_time_series(db, stock, df, interval):
+    path = f"stocks/{stock.id}/{interval}"
     stock_dict = stock.to_dict()
-    df = fetch_data_frame(symbol=stock.id, period=period, interval=interval).to_dict(orient='index')
 
-    # tasks = []
+    tasks = []
     for key in df:
         time_series = df[key]
 
@@ -118,26 +116,25 @@ async def save_time_series(stock, period, interval, db):
             u'volume': float(time_series["Volume"]),
         }
 
-        # tasks.append(
-        save(
-            db=db,
-            transaction=None,
-            collection=path,
-            uuid=doc["uuid"],
-            document=doc
+        tasks.append(
+            save(
+                db=db,
+                transaction=None,
+                collection=path,
+                uuid=doc["uuid"],
+                document=doc
+            )
         )
-        # )
-    # await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks)
 
 
-async def update_stock_price(stock, db):
-    df = fetch_data_frame(symbol=stock.id, period="5d", interval="1d")
+async def update_stock_price(db, stock, df):
     prices = list(map(lambda price: round(price, 2), df.Close.values))
 
     if len(prices) == 0:
         fields = {
             "enabled": False,
-            "updated_at": firestore.firestore.SERVER_TIMESTAMP
+            "updated_at": firestore.SERVER_TIMESTAMP
         }
         logging.warning("%s deactivated", stock.id)
     elif len(prices) > 1:
@@ -146,7 +143,7 @@ async def update_stock_price(stock, db):
             "price_flutuation": round((prices[-1] / prices[-2] - 1) * 100, 2),
             "price_absolute_flutuation": round(prices[-1] - prices[-2], 2),
             "week": prices,
-            "updated_at": firestore.firestore.SERVER_TIMESTAMP
+            "updated_at": firestore.SERVER_TIMESTAMP
         }
     else:
         fields = {
@@ -154,20 +151,39 @@ async def update_stock_price(stock, db):
             "price_flutuation": 0,
             "price_absolute_flutuation": 0,
             "week": prices,
-            "updated_at": firestore.firestore.SERVER_TIMESTAMP
+            "updated_at": firestore.SERVER_TIMESTAMP
         }
 
+    print("saving", stock.id)
     await db.collection("stocks").document(stock.id).update(fields)
 
 
-async def crawl_stock_price(stocks_dict, period, interval, db):
+async def crawl_stock_price(stocks_dict, period, interval):
     try:
+        db = firestore.AsyncClient()
+        symbols_list = reduce(lambda a, b: a + " " + b.to_dict()["uuid"], stocks_dict, "")
+        print(symbols_list)
+        df_time_series = fetch_data_frame(symbols=symbols_list, period=period, interval=interval)
+        general_df_time_series = fetch_data_frame(symbols=symbols_list, period="5d", interval="1d")
+
         tasks = []
         for stock in stocks_dict:
             print(stock.id)
-            # await save_time_series(stock, period, interval, db)
-            tasks.append(save_time_series(stock, period, interval, db))
-            # tasks.append(update_stock_price(stock, db))
+            tasks.append(
+                save_time_series(
+                    db=db,
+                    stock=stock,
+                    df=df_time_series[stock.id].to_dict(orient='index'),
+                    interval=interval
+                )
+            )
+            tasks.append(
+                update_stock_price(
+                    db=db,
+                    stock=stock,
+                    df=general_df_time_series[stock.id]
+                )
+            )
             logging.info('%s saved!', stock.id)
         await asyncio.gather(*tasks)
     except Exception as e:
@@ -179,7 +195,7 @@ async def crawl_stock_price(stocks_dict, period, interval, db):
 def entry_point(event, context):
     period = "5d"
     interval = "1d"
-    stock_len = 10
+    stock_len = 5
 
     # period = str(event["attributes"]["period"])
     # interval = str(event["attributes"]["interval"])
@@ -187,15 +203,42 @@ def entry_point(event, context):
 
     import time
     s = time.perf_counter()
-    app, db = instantiate()
+    stocks_dict = fetch_stocks(stock_len)
 
-    stocks_dict = fetch_stocks(db, stock_len)
-
-    asyncio.run(crawl_stock_price(stocks_dict, period, interval, db))
+    asyncio.run(crawl_stock_price(stocks_dict, period, interval))
 
     elapsed = time.perf_counter() - s
     print(f"{__file__} executed in {elapsed:0.2f} seconds.")
 
 
+async def firdele(db, path):
+    await db.document(path).delete()
+    print(path)
+
+
+async def delete_all(stocks):
+    db = firestore.AsyncClient()
+    tasks = []
+    count = 0
+    for stock in stocks:
+        # print(stock.reference.path)
+        if count > 450:
+            break
+        if not stock.reference.path.__contains__(".SA"):
+            tasks.append(firdele(db, stock.reference.path))
+            count += 1
+    await asyncio.gather(*tasks)
+    return False
+
+
 if __name__ == '__main__':
-    entry_point(None, None)
+    db = firestore.Client()
+    count = 0
+    while True:
+        stocks = db.collection_group("30m").stream()
+        asyncio.run(delete_all(stocks))
+
+        count += 400
+        print(count, "deleted")
+
+    # entry_point(None, None)

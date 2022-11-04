@@ -6,3 +6,5 @@ python-dotenv==0.21.0
 yfinance==0.1.84
 pandas==1.5.1
 setuptools==58.1.0
+google-cloud-firestore==2.7.2
+asgiref==3.5.2
