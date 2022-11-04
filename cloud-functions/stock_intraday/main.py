@@ -1,12 +1,9 @@
 import asyncio
 import logging
-import os
 from functools import reduce
 
-import firebase_admin
 import sentry_sdk
 import yfinance as yf
-from firebase_admin.credentials import Certificate
 from google.cloud import firestore
 from sentry_sdk.integrations.gcp import GcpIntegration
 
@@ -21,20 +18,6 @@ sentry_sdk.init(
     # We recommend adjusting this value in production,
     traces_sample_rate=1,
 )
-
-
-def instantiate():
-    if firebase_admin._apps:
-        return firestore.AsyncClient()
-
-    try:
-        key_path = f'{os.path.pardir}/credentials.json'
-        cred = Certificate(key_path)
-        db = firestore.AsyncClient()
-    except:
-        db = firestore.AsyncClient()
-
-    return db
 
 
 async def save(db, transaction, collection, uuid, document):
@@ -93,7 +76,7 @@ def fetch_stocks(stock_len):
         .get()
 
 
-async def save_time_series(db, stock, df, interval):
+def save_time_series(db, stock, df, interval):
     path = f"stocks/{stock.id}/{interval}"
     stock_dict = stock.to_dict()
 
@@ -103,7 +86,7 @@ async def save_time_series(db, stock, df, interval):
 
         doc = {
             u'uuid': str(int(key.value / 1_000_000)),
-            u'datetime': key,
+            u'datetime': str(key),
             u'timezone': "America/Sao_Paulo",
             u'stock_uuid': stock.id,
             u'exchange_uuid': str(stock_dict["exchange_id"]),
@@ -125,7 +108,7 @@ async def save_time_series(db, stock, df, interval):
                 document=doc
             )
         )
-    await asyncio.gather(*tasks)
+    return tasks
 
 
 async def update_stock_price(db, stock, df):
@@ -154,7 +137,7 @@ async def update_stock_price(db, stock, df):
             "updated_at": firestore.SERVER_TIMESTAMP
         }
 
-    print("saving", stock.id)
+    logging.info("saving", stock.id)
     await db.collection("stocks").document(stock.id).update(fields)
 
 
@@ -162,21 +145,20 @@ async def crawl_stock_price(stocks_dict, period, interval):
     try:
         db = firestore.AsyncClient()
         symbols_list = reduce(lambda a, b: a + " " + b.to_dict()["uuid"], stocks_dict, "")
-        print(symbols_list)
+        logging.info(symbols_list)
         df_time_series = fetch_data_frame(symbols=symbols_list, period=period, interval=interval)
         general_df_time_series = fetch_data_frame(symbols=symbols_list, period="5d", interval="1d")
 
         tasks = []
         for stock in stocks_dict:
-            print(stock.id)
-            tasks.append(
-                save_time_series(
-                    db=db,
-                    stock=stock,
-                    df=df_time_series[stock.id].to_dict(orient='index'),
-                    interval=interval
-                )
+            logging.info(stock.id)
+            tasks += save_time_series(
+                db=db,
+                stock=stock,
+                df=df_time_series[stock.id].to_dict(orient='index'),
+                interval=interval
             )
+
             tasks.append(
                 update_stock_price(
                     db=db,
@@ -187,19 +169,14 @@ async def crawl_stock_price(stocks_dict, period, interval):
             logging.info('%s saved!', stock.id)
         await asyncio.gather(*tasks)
     except Exception as e:
-        print(e)
         logging.error(e)
         sentry_sdk.capture_exception(e)
 
 
 def entry_point(event, context):
-    period = "5d"
-    interval = "1d"
-    stock_len = 5
-
-    # period = str(event["attributes"]["period"])
-    # interval = str(event["attributes"]["interval"])
-    # stock_len = int(event["attributes"]["stock_len"])
+    period = str(event["attributes"]["period"])
+    interval = str(event["attributes"]["interval"])
+    stock_len = int(event["attributes"]["stock_len"])
 
     import time
     s = time.perf_counter()
@@ -208,37 +185,4 @@ def entry_point(event, context):
     asyncio.run(crawl_stock_price(stocks_dict, period, interval))
 
     elapsed = time.perf_counter() - s
-    print(f"{__file__} executed in {elapsed:0.2f} seconds.")
-
-
-async def firdele(db, path):
-    await db.document(path).delete()
-    print(path)
-
-
-async def delete_all(stocks):
-    db = firestore.AsyncClient()
-    tasks = []
-    count = 0
-    for stock in stocks:
-        # print(stock.reference.path)
-        if count > 450:
-            break
-        if not stock.reference.path.__contains__(".SA"):
-            tasks.append(firdele(db, stock.reference.path))
-            count += 1
-    await asyncio.gather(*tasks)
-    return False
-
-
-if __name__ == '__main__':
-    db = firestore.Client()
-    count = 0
-    while True:
-        stocks = db.collection_group("30m").stream()
-        asyncio.run(delete_all(stocks))
-
-        count += 400
-        print(count, "deleted")
-
-    # entry_point(None, None)
+    logging.info(f"{__file__} executed in {elapsed:0.2f} seconds.")
