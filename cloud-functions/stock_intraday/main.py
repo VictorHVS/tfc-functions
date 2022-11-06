@@ -1,16 +1,19 @@
 import asyncio
 import logging
+import os
 from functools import reduce
 
 import sentry_sdk
 import yfinance as yf
 from google.cloud import firestore
+from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.gcp import GcpIntegration
 
 sentry_sdk.init(
-    dsn="https://0df591e2d2484901b49980602430c81b@o78857.ingest.sentry.io/6775447",
+    dsn=os.environ.get('SENTRY_DSN'),
     integrations=[
         GcpIntegration(timeout_warning=True),
+        FlaskIntegration()
     ],
 
     # Set traces_sample_rate to 1.0 to capture 100%

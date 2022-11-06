@@ -2,10 +2,40 @@
 Table users {
   id varchar [pk]
   created_at timestamp
+  name varchar
+  username varchar
+}
+
+Table user_portfolio {
+  currency_symbol varchar [pk]
+  user_id varchar [ref: > users.id]
+  net_value float
+  sum float
+}
+
+Table user_stocks {
+  id varchar unique
+  created_at timestamp
   updated_at timestamp
-  net_value int
-  portfolio_value int
+  exchange varchar
+  symbol varchar
+  amount int
+  avg_price int  // total_spent / amount
+  total_spent int
   consolidated_at timestamp
+}
+
+Table user_queue_orders {
+  id varchar unique
+  created_at timestamp
+  updated_at timestamp
+  amount int
+  price int // atualizado no servidor
+  mic_code varchar [ref: > exchanges.mic_code]  // info duplicada a fins de NOSQL
+  user_id varchar [ref: > users.id]
+  symbol varchar [ref: > stocks.symbol]
+  exchange varchar // info duplicada a fins de NOSQL
+  done boolean [default: false]
 }
 
 Table exchanges {
@@ -25,7 +55,7 @@ Table stocks {
   updated_at timestamp
   name varchar
   currency varchar
-  exchange varchar 
+  exchange varchar
   mic_code varchar [ref: - exchanges.mic_code]
   type varchar
   price int
@@ -59,31 +89,6 @@ Table time_series {
   low numeric
   close numeric
   volume numeric
-}
-
-Table user_assets {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  exchange varchar
-  symbol varchar
-  amount int
-  avg_price int  // total_spent / amount
-  total_spent int
-  consolidated_at timestamp
-}
-
-Table user_queue_orders {
-  id varchar unique
-  created_at timestamp
-  updated_at timestamp
-  amount int
-  price int // atualizado no servidor
-  mic_code varchar [ref: > exchanges.mic_code]  // info duplicada a fins de NOSQL
-  user_id varchar [ref: > users.id]
-  symbol varchar [ref: > stocks.symbol]
-  exchange varchar // info duplicada a fins de NOSQL
-  done boolean [default: false]
 }
 
 // Table sector
