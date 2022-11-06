@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import yfinance as yf
 
-from seeders.model import TimeSeries
+from model import TimeSeries
 
 periods_intervals = [
     {

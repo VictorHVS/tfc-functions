@@ -25,10 +25,31 @@ async def delete_all(stocks):
 
 if __name__ == '__main__':
     db = firestore.Client()
-    count = 0
-    while True:
-        stocks = db.collection_group("30m").stream()
-        asyncio.run(delete_all(stocks))
+    cities_ref = db.collection_group("30m")
+    first_query = cities_ref.order_by(u'uuid', firestore.Query.DESCENDING).limit(400)
 
+    # Get the last document from the results
+    docs = first_query.get()
+    last_doc = list(docs)[-1]
+
+    count = 0
+    while not last_doc.reference.path.__contains__(".SA"):
+
+        asyncio.run(delete_all(docs))
         count += 400
         print(count, "deleted")
+
+        last_pop = last_doc.id
+
+        next_query = (
+            cities_ref
+            .order_by(u'uuid', firestore.Query.DESCENDING)
+            .start_after({
+                u'uuid': last_pop
+            })
+            .limit(400)
+        )
+
+        docs = next_query.get()
+        last_doc = list(docs)[-1]
+        print("LAST DOC:", last_doc.reference.path)

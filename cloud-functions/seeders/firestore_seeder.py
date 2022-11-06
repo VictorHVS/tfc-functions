@@ -6,7 +6,7 @@ from firebase_admin.credentials import Certificate
 
 from seeders.exchanges.exchanges import exchanges_to_json
 from seeders.historical_data.historical_data import time_series_to_dict, periods_intervals
-from seeders.model import Exchange, Stock, TimeSeries
+from model import Exchange, Stock, TimeSeries
 from seeders.stocks.stocks import stocks_to_json
 
 

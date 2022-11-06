@@ -102,7 +102,6 @@ class TimeSeries:
                  close,
                  volume,
                  ):
-
         self.uuid = str(uuid)
         self.datetime = datetime
         self.timezone = str(timezone)
@@ -130,5 +129,46 @@ class TimeSeries:
             u'low': self.low,
             u'close': self.close,
             u'volume': self.volume,
+        }
+        return dest
+
+
+class UserPortfolio:
+    def __init__(self,
+                 currency,
+                 net_value,
+                 sum
+                 ):
+        self.currency = currency
+        self.net_value = float(net_value)
+        self.sum = float(sum)
+
+    def to_dict(self):
+        return self.__dict__
+
+
+class User:
+    COLLECTION = "users"
+
+    def __init__(self,
+                 uuid,
+                 created_at,
+                 name,
+                 username,
+                 portfolio_by_currency
+                 ):
+        self.uuid = str(uuid)
+        self.created_at = created_at
+        self.name = name
+        self.username = username
+        self.portfolio_by_currency = portfolio_by_currency
+
+    def to_dict(self):
+        dest = {
+            u'uuid': self.uuid,
+            u'created_at': self.created_at,
+            u'name': self.name,
+            u'username': self.username,
+            u'portfolio_by_currency': [x.__dict__ for x in self.portfolio_by_currency],
         }
         return dest
