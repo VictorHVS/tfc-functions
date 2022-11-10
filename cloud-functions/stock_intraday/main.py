@@ -6,14 +6,12 @@ from functools import reduce
 import sentry_sdk
 import yfinance as yf
 from google.cloud import firestore
-from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.gcp import GcpIntegration
 
 sentry_sdk.init(
     dsn=os.environ.get('SENTRY_DSN'),
     integrations=[
-        GcpIntegration(timeout_warning=True),
-        FlaskIntegration()
+        GcpIntegration(timeout_warning=True)
     ],
 
     # Set traces_sample_rate to 1.0 to capture 100%
