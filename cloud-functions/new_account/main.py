@@ -10,12 +10,18 @@ from sentry_sdk.integrations.gcp import GcpIntegration
 class UserPortfolio:
     def __init__(self,
                  currency,
+                 symbol,
                  net_value,
+                 price_fluctuation,
+                 price_fluctuation_absolute,
                  sum
                  ):
         self.currency = currency
         self.net_value = float(net_value)
         self.sum = float(sum)
+        self.symbol = symbol
+        self.price_fluctuation = float(price_fluctuation)
+        self.price_fluctuation_absolute = float(price_fluctuation_absolute)
 
     def to_dict(self):
         return self.__dict__
@@ -27,12 +33,22 @@ class User:
                  created_at,
                  name,
                  username,
+                 performance,
+                 profitable,
+                 trades,
+                 rank_position,
+                 week,
                  portfolio_by_currency
                  ):
         self.uuid = str(uuid)
         self.created_at = created_at
         self.name = name
         self.username = username
+        self.performance = performance
+        self.profitable = profitable
+        self.trades = trades
+        self.rank_position = rank_position
+        self.week = week
         self.portfolio_by_currency = portfolio_by_currency
 
     def to_dict(self):
@@ -41,6 +57,11 @@ class User:
             u'created_at': self.created_at,
             u'name': self.name,
             u'username': self.username,
+            u'performance': self.performance,
+            u'proftable': self.profitable,
+            u'trades': self.trades,
+            u'rank_position': self.rank_position,
+            u'week': self.week,
             u'portfolio_by_currency': [x.__dict__ for x in self.portfolio_by_currency],
         }
         return dest
@@ -68,11 +89,19 @@ def auth_new_account(event, context):
             created_at=created_at,
             name=None,
             username=None,
+            performance=0,
+            profitable=0,
+            trades=0,
+            rank_position=0,
+            week=0,
             portfolio_by_currency=[
                 UserPortfolio(
                     currency="BRL",
+                    symbol="R$",
                     net_value=float(net_value),
-                    sum=float(net_value)
+                    sum=float(net_value),
+                    price_fluctuation=0,
+                    price_fluctuation_absolute=0,
                 )
             ]
         )
