@@ -93,7 +93,7 @@ def auth_new_account(event, context):
             profitable=0,
             trades=0,
             rank_position=0,
-            week=[net_value],
+            week=[float(net_value)],
             portfolio_by_currency=[
                 UserPortfolio(
                     currency="BRL",
