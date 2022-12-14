@@ -68,11 +68,11 @@ def fetch_data_frame(symbols, period="1d", interval="30min"):
     )
 
 
-def fetch_stocks(stock_len):
+def fetch_stocks(stock_len, interval):
     db = firestore.Client()
     return db.collection("stocks") \
         .where("enabled", "==", True) \
-        .order_by("updated_at", direction=firestore.Query.ASCENDING) \
+        .order_by(f"time_series_{interval}", direction=firestore.Query.ASCENDING) \
         .limit(stock_len) \
         .get()
 
@@ -181,7 +181,7 @@ def entry_point(event, context):
 
     import time
     s = time.perf_counter()
-    stocks_dict = fetch_stocks(stock_len)
+    stocks_dict = fetch_stocks(stock_len, interval)
 
     asyncio.run(crawl_stock_price(stocks_dict, period, interval))
 
