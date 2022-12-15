@@ -30,10 +30,20 @@ def delete_user_collection(user_id):
     db.collection("users").document(user_id).delete()
 
 
+def delete_collections(collection_path):
+    docs = db.collection(collection_path).list_documents()
+
+    for doc in docs:
+        doc.delete()
+        logging.info(doc.to_dict())
+
+
 def auth_remove_account(event, context):
     try:
         user_id = event['uid']
         delete_user_collection(user_id)
+        delete_collections(f"users/{user_id}/orders")
+        delete_collections(f"users/{user_id}/portfolio")
     except Exception as e:
         logging.error(e)
         sentry_sdk.capture_exception(e)
