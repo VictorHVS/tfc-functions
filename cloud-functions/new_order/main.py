@@ -2,6 +2,21 @@ import asyncio
 import logging
 
 from google.cloud import firestore
+from sentry_sdk.integrations.gcp import GcpIntegration
+import sentry_sdk
+import os
+
+sentry_sdk.init(
+    dsn=os.environ.get('SENTRY_DSN'),
+    integrations=[
+        GcpIntegration(timeout_warning=True)
+    ],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production,
+    traces_sample_rate=1,
+)
 
 db = firestore.Client()
 db_async = firestore.AsyncClient()
@@ -238,12 +253,16 @@ async def execute_user_orders(user_id: str, orders: list):
 
 
 async def main(orders):
-    orders_by_users = group_orders_by_users(orders)
-    print(orders_by_users)
-    tasks = []
-    for user_id in orders_by_users.keys():
-        tasks.append(execute_user_orders(user_id, orders_by_users[user_id]))
-    await asyncio.gather(*tasks)
+    try:
+        orders_by_users = group_orders_by_users(orders)
+        print(orders_by_users)
+        tasks = []
+        for user_id in orders_by_users.keys():
+            tasks.append(execute_user_orders(user_id, orders_by_users[user_id]))
+        await asyncio.gather(*tasks)
+    except Exception as e:
+        logging.error(e)
+        sentry_sdk.capture_exception(e)
 
 
 # tip: rodar users de forma assincrona.
@@ -258,7 +277,8 @@ def process_order(event, param):
 
     orders = fetch_orders()
 
-    asyncio.run(main(orders))
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    asyncio.run(main(orders), debug=False)
 
     elapsed = time.perf_counter() - s
     logging.info(f"{__file__} executed in {elapsed:0.2f} seconds.")
