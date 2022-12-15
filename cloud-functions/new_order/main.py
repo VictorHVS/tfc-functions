@@ -1,30 +1,3 @@
-# def auth_new_account(event, context):
-#     try:
-#         net_value = os.environ.get('NET_VALUE')
-#         created_at = datetime.strptime(event['metadata']['createdAt'], "%Y-%m-%dT%H:%M:%SZ")
-#         user = User(
-#             uuid=event['uid'],
-#             created_at=created_at,
-#             name=None,
-#             username=None,
-#             portfolio_by_currency=[
-#                 UserPortfolio(
-#                     currency="BRL",
-#                     net_value=float(net_value),
-#                     sum=float(net_value)
-#                 )
-#             ]
-#         )
-#
-#         db = firestore.Client()
-#         if db.collection("users").document(user.uuid).get().exists:
-#             raise ValueError(f"User {user.uuid} already exists")
-#
-#         db.collection("users").document(user.uuid).set(user.to_dict())
-#         logging.info(user.to_dict())
-#     except Exception as e:
-#         logging.error(e)
-#         sentry_sdk.capture_exception(e)
 import asyncio
 import logging
 
@@ -37,7 +10,7 @@ db_async = firestore.AsyncClient()
 # 1. Pegar ordens a processar ordenada por user, stock e data asc
 def fetch_orders():
     return db.collection_group("orders") \
-        .where("status", "==", "PENDING") \
+        .where("executed", "==", False) \
         .order_by("created_at", direction=firestore.Query.ASCENDING) \
         .stream()
 
@@ -48,16 +21,61 @@ def fetch_orders():
 async def execute_buy_order(transaction, user_ref, order: dict):
     print("execute buy order", order.__dict__)
     user_snapshot = await user_ref.get(transaction=transaction)
-    net_value = user_snapshot.get("portfolio")[order.get("currency")]["net_value"]
-    #TODO: cachear saldo das stocks
-    stock_price = 100.23
+    net_value = user_snapshot.get("portfolio_by_currency")[0]["net_value"]
+
+    stock_ref, stock_snapshot = await get_stock_ref_snapshot(transaction=transaction, stock_id=order.get("stock_id"))
+    stock_price = stock_snapshot.get("price")
     order_price = order.get("amount") * stock_price
+
     if net_value < order_price:
+        order_ref = db_async.document(order.reference.path)
+        update_queue_order(
+            transaction=transaction,
+            order_ref=order_ref,
+            executed=None,
+            unit_price=stock_price,
+            total_price=order_price
+        )
         return False
 
-    # TODO: adicionar um ID com caminho lógico para facilitar navegacao.
-    user_stock_snapshot = await db_async.collection("users", user_ref.id, "portfolio").where("stock_id", "==", order.get("stock_id")).limit(1).get(transaction=transaction)
-    print(user_stock_snapshot.exists)
+    portfolio_ref, portfolio_snapshot = await get_portfolio_stock(
+        transaction=transaction,
+        user_id=user_ref.id,
+        exchange_id=stock_snapshot.get("exchange_id"),
+        stock_id=stock_ref.id)
+
+    if portfolio_snapshot.exists:
+        update_portfolio(
+            transaction=transaction,
+            portfolio_ref=portfolio_ref,
+            portfolio_snapshot=portfolio_snapshot,
+            amount=order.get("amount"),
+            total_price=order_price,
+            is_buy=True
+        )
+    else:
+        create_portfolio(transaction=transaction,
+                         user=user_snapshot,
+                         stock=stock_snapshot,
+                         amount=order.get("amount"),
+                         total_price=order_price)
+
+    update_queue_order(
+        transaction=transaction,
+        order_ref=db_async.document(order.reference.path),
+        executed=True,
+        unit_price=stock_price,
+        total_price=order_price
+    )
+
+    update_profile(
+        transaction=transaction,
+        user_ref=user_ref,
+        user_snapshot=user_snapshot,
+        total_price=order_price,
+        net_value=net_value,
+        is_buy=True
+    )
     return True
 
 
@@ -66,16 +84,72 @@ def execute_sell_order():
     pass
 
 
-def update_portfolio():
-    pass
+def create_portfolio(transaction, user, stock, amount, total_price):
+    fields = {
+        "created_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+        "user_id": user.id,
+        "amount": amount,
+        "currency": stock.get("currency"),
+        "exchange_id": stock.get("exchange_id"),
+        "medium_price": float(total_price / amount),
+        "total_spent": float(total_price),
+        "stock_id": stock.id,
+    }
+    portfolio_ref = db_async.document(f"users/{user.id}/portfolio/{stock.get('exchange_id')}_{stock.id}")
+    transaction.set(portfolio_ref, fields)
 
 
-def update_profile():
-    pass
+def update_portfolio(transaction, portfolio_ref, portfolio_snapshot, amount, total_price, is_buy):
+    if not is_buy:
+        amount *= -1
+        total_price *= -1
+
+    new_amount = portfolio_snapshot.get("amount") + amount
+    new_total_spent = portfolio_snapshot.get("total_spent") + total_price
+
+    fields = {
+        "updated_at": firestore.SERVER_TIMESTAMP,
+        "amount": new_amount,
+        "medium_price": round(new_total_spent / new_amount, 2),
+        "total_spent": float(new_total_spent)
+    }
+    transaction.update(portfolio_ref, fields)
 
 
-def update_queue_order():
-    pass
+def update_profile(transaction, user_ref, user_snapshot, total_price, net_value, is_buy):
+    if is_buy:
+        total_price *= -1
+
+    old_values = user_snapshot.get("portfolio_by_currency")
+    old_values[0]['net_value'] = round(net_value + total_price, 2)
+    fields = {
+        "portfolio_by_currency": old_values,
+        "trades": firestore.Increment(1)
+    }
+
+    transaction.update(user_ref, fields)
+
+
+def update_queue_order(transaction, order_ref, executed, unit_price, total_price):
+    fields = {
+        "executed": executed,
+        "unit_price": unit_price,
+        "total_price": total_price,
+    }
+    transaction.update(order_ref, fields)
+
+
+async def get_stock_ref_snapshot(transaction, stock_id: str):
+    stock_ref = db_async.document(f"stocks/{stock_id}")
+    snapshot = await stock_ref.get(transaction=transaction)
+    return stock_ref, snapshot
+
+
+async def get_portfolio_stock(transaction, user_id, exchange_id, stock_id):
+    portfolio_ref = db_async.document(f"users/{user_id}/portfolio/{exchange_id}_{stock_id}")
+    snapshot = await portfolio_ref.get(transaction=transaction)
+    return portfolio_ref, snapshot
 
 
 def group_orders_by_users(orders: list) -> dict:
@@ -115,8 +189,8 @@ async def main(orders):
 # tip: rodar users de forma assincrona.
 # 1. Pegar ordens a processar ordenada por user, stock e data asc
 # 2. Caso seja buy order verificar se o usuário possui fundos para compra (net_value)
-# 3. Verificar se ja existe no portfolio do user, criar se for buy order
-# 4. Caso seja sell order, verificar se o usuário possui esta quantidade de assets
+# 3. Verificar se ja existe no portfolio do user, criar se for buy order.
+# 4. Caso seja sell order, verificar se o usuário possui esta quantidade de assets. Deletar caso seja o ultimo
 # 5. Efetuar a operação em transaction: atualizar portfolio, atualizar user e dar baixa na order.
 def process_order(event, param):
     import time
