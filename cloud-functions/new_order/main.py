@@ -79,9 +79,69 @@ async def execute_buy_order(transaction, user_ref, order: dict):
     return True
 
 
+def delete_portfolio(transaction, portfolio_ref):
+    transaction.delete(portfolio_ref)
+
+
 # 4. Caso seja sell order, verificar se o usuário possui esta quantidade de assets
-def execute_sell_order():
-    pass
+@firestore.async_transactional
+async def execute_sell_order(transaction, user_ref, order: dict):
+    print("execute sell order", order.__dict__)
+    user_snapshot = await user_ref.get(transaction=transaction)
+    net_value = user_snapshot.get("portfolio_by_currency")[0]["net_value"]
+
+    stock_ref, stock_snapshot = await get_stock_ref_snapshot(transaction=transaction, stock_id=order.get("stock_id"))
+    stock_price = stock_snapshot.get("price")
+    order_price = order.get("amount") * stock_price
+
+    # verifica se possui a quantidade de acoes disponiveis
+    portfolio_ref, portfolio_snapshot = await get_portfolio_stock(
+        transaction=transaction,
+        user_id=user_ref.id,
+        exchange_id=stock_snapshot.get("exchange_id"),
+        stock_id=stock_ref.id)
+
+    if not portfolio_snapshot.exists or portfolio_snapshot.get("amount") < order.get("amount"):
+        order_ref = db_async.document(order.reference.path)
+        update_queue_order(
+            transaction=transaction,
+            order_ref=order_ref,
+            executed=None,
+            unit_price=stock_price,
+            total_price=order_price
+        )
+        return False
+
+    if portfolio_snapshot.get("amount") > order.get("amount"):
+        update_portfolio(
+            transaction=transaction,
+            portfolio_ref=portfolio_ref,
+            portfolio_snapshot=portfolio_snapshot,
+            amount=order.get("amount"),
+            total_price=order_price,
+            is_buy=False
+        )
+
+    if portfolio_snapshot.get("amount") == order.get("amount"):
+        delete_portfolio(transaction=transaction, portfolio_ref=portfolio_ref)
+
+    update_queue_order(
+        transaction=transaction,
+        order_ref=db_async.document(order.reference.path),
+        executed=True,
+        unit_price=stock_price,
+        total_price=order_price
+    )
+
+    update_profile(
+        transaction=transaction,
+        user_ref=user_ref,
+        user_snapshot=user_snapshot,
+        total_price=order_price,
+        net_value=net_value,
+        is_buy=False
+    )
+    return True
 
 
 def create_portfolio(transaction, user, stock, amount, total_price):
@@ -174,7 +234,7 @@ async def execute_user_orders(user_id: str, orders: list):
         if order_dict["is_buy"]:
             await execute_buy_order(transaction, user_ref, order)
         else:
-            execute_sell_order()
+            await execute_sell_order(transaction, user_ref, order)
 
 
 async def main(orders):
