@@ -7,4 +7,4 @@ yfinance==0.1.85
 pandas==1.5.1
 setuptools==65.5.1
 google-cloud-firestore==2.7.2
-asgiref==3.5.2
+asgiref==3.8.1
