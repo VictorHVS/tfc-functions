@@ -1,4 +1,4 @@
-twelvedata==1.2.9
+twelvedata==1.2.24
 websocket-client==1.4.2
 python-decouple==3.6
 requests==2.28.1
